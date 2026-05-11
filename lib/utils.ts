@@ -5,10 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * 🛠️ CANVAS UTILITY FUNCTION: wrapText
- * This function calculates where to draw lines of text so they wrap properly within a width.
- */
+// 🛠️ CANVAS UTILITY: Multi-line wrapping
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -19,17 +16,13 @@ function wrapText(
 ): number {
   const words = text.split(" ");
   let line = "";
-  let testLine = "";
-  let metrics;
-  let testWidth;
   let currentY = y;
 
   for (let n = 0; n < words.length; n++) {
-    testLine = line + words[n] + " ";
-    metrics = ctx.measureText(testLine);
-    testWidth = metrics.width;
+    const testLine = line + words[n] + " ";
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
     
-    // If this test line is too wide and not the first word, draw the current line and start a new one.
     if (testWidth > maxWidth && n > 0) {
       ctx.fillText(line, x, currentY);
       line = words[n] + " ";
@@ -38,18 +31,11 @@ function wrapText(
       line = testLine;
     }
   }
-  
-  // Draw the final line.
   ctx.fillText(line, x, currentY);
-  
-  // Return the final y position so we know where to start the next element.
   return currentY;
 }
 
-/**
- * 🛠️ CANVAS UTILITY FUNCTION: truncateText
- * This function shortens a long string with an ellipsis (e.g., "Very long text..." -> "Very...")
- */
+// 🛠️ CANVAS UTILITY: Text truncation
 function truncateText(text: string, maxLength: number): string {
   if (text.length > maxLength) {
     return text.substring(0, maxLength - 3) + "...";
@@ -58,55 +44,69 @@ function truncateText(text: string, maxLength: number): string {
 }
 
 /**
- * 📸 VIRAL IMAGE GENERATOR (Zero Cost, Optimized)
- * Generates a perfectly optimized 1080x1080 square verdict card.
+ * 📸 VIRAL IMAGE GENERATOR (Zero Cost, Optimized & Bulletproof)
  */
 export const generateShareCard = (caseTitle: string, verdict: any) => {
   const canvas = document.createElement("canvas");
-  const size = 1080; // Optimized square for IG Stories/Twitter
+  const size = 1080; 
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // The visual styles on canvas render a bit differently than CSS, 
-  // so we have to manually set them for a premium look.
+  const FONT_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
-  // 1. BACKGROUND (Pure Black for contrast)
-  ctx.fillStyle = "#09090b"; // match our background-color
+  // 1. BACKGROUND
+  ctx.fillStyle = "#09090b"; 
   ctx.fillRect(0, 0, size, size);
 
   // 2. OUTER GOLDEN BORDER
-  ctx.strokeStyle = "#e2b714"; // Gavel Gold
+  ctx.strokeStyle = "#e2b714"; 
   ctx.lineWidth = 14;
   ctx.strokeRect(40, 40, size - 80, size - 80);
 
-  // 3. HEADER (THE INTERNET COURT)
+  // 3. HEADER
   ctx.fillStyle = "#ffffff";
-  ctx.font = "black 60px Geist"; // Using Geist for that modern feel
+  ctx.font = `900 55px ${FONT_FAMILY}`;
   ctx.textAlign = "center";
   ctx.fillText("🏛️ THE INTERNET COURT", size / 2, 160);
 
   // 4. SUBHEADER (Case Title)
-  ctx.fillStyle = "#a1a1aa"; // text-zinc-400
-  ctx.font = "italic 36px Geist";
-  const truncatedTitle = truncateText(caseTitle, 50); // Truncate to prevent bleeding
+  ctx.fillStyle = "#a1a1aa"; 
+  ctx.font = `italic 36px ${FONT_FAMILY}`;
+  const truncatedTitle = truncateText(caseTitle, 45); 
   ctx.fillText(`“${truncatedTitle}”`, size / 2, 230);
 
-  // 5. THE VERDICT BADGE (The most important part)
+  // 5. THE VERDICT BADGE (Auto-Scaling Fix!)
   const guiltyParty = verdict.guilty_party.toUpperCase();
-  const badgeWidth = size - 300;
+  const verdictText = `VERDICT: ${guiltyParty}`;
+  
+  // Set absolute maximum width for the badge (leaving a safe 60px margin on each side)
+  const MAX_BADGE_WIDTH = size - 120; 
+  
+  // Start at 50px font, and shrink it until it fits safely inside the MAX width
+  let verdictFontSize = 50;
+  ctx.font = `900 ${verdictFontSize}px ${FONT_FAMILY}`;
+  let textMetrics = ctx.measureText(verdictText);
+  
+  while (textMetrics.width > MAX_BADGE_WIDTH - 80 && verdictFontSize > 20) {
+    verdictFontSize -= 2;
+    ctx.font = `900 ${verdictFontSize}px ${FONT_FAMILY}`;
+    textMetrics = ctx.measureText(verdictText);
+  }
+
+  // Calculate final dimensions
+  const badgeWidth = Math.max(size - 300, textMetrics.width + 80); 
   const badgeHeight = 110;
   const badgeX = (size - badgeWidth) / 2;
   const badgeY = 320;
 
-  // Render a glow behind the badge
-  ctx.shadowColor = "#ef444450"; // red-500 with 50% opacity
+  // Draw Glow & Badge
+  ctx.shadowColor = "#ef444450"; 
   ctx.shadowBlur = 40;
-  ctx.fillStyle = "#ef4444"; // red-500
+  ctx.fillStyle = "#ef4444"; 
   
-  // Custom rounded rectangle for the badge
-  const r = 20; // border-radius
+  const r = 20; 
   ctx.beginPath();
   ctx.moveTo(badgeX + r, badgeY);
   ctx.lineTo(badgeX + badgeWidth - r, badgeY);
@@ -120,70 +120,55 @@ export const generateShareCard = (caseTitle: string, verdict: any) => {
   ctx.closePath();
   ctx.fill();
 
-  // Reset shadow for subsequent elements
   ctx.shadowColor = "transparent";
   ctx.shadowBlur = 0;
 
-  // Verdict Text
+  // Verdict Text (Centered dynamically based on the calculated font size)
   ctx.fillStyle = "#ffffff";
-  ctx.font = "black 65px Geist";
   ctx.textAlign = "center";
-  ctx.fillText(`VERDICT: ${guiltyParty}`, size / 2, badgeY + 75);
+  ctx.fillText(verdictText, size / 2, badgeY + (badgeHeight / 2) + (verdictFontSize * 0.35));
 
-  // 6. THE STATS SECTION (Toxicity, Red Flags)
+  // 6. THE STATS SECTION
   const statsY = badgeY + badgeHeight + 100;
   const statsWidth = size - 300;
   const statsX = (size - statsWidth) / 2;
 
   ctx.textAlign = "left";
-  ctx.fillStyle = "#d4d4d8"; // text-zinc-300
-  ctx.font = "bold 42px Geist";
+  ctx.fillStyle = "#d4d4d8"; 
+  ctx.font = `bold 42px ${FONT_FAMILY}`;
   ctx.fillText(`📊 BLAME SPLIT:`, statsX, statsY);
-  ctx.fillText(`☠️ TOXICITY:`, statsX, statsY + 65);
-  ctx.fillText(`🚩 RED FLAGS:`, statsX, statsY + 130);
+  ctx.fillText(`☠️ TOXICITY:`, statsX, statsY + 75);
+  ctx.fillText(`🚩 RED FLAGS:`, statsX, statsY + 150);
 
   ctx.textAlign = "right";
   ctx.fillStyle = "#ffffff";
-  ctx.font = "black 42px Geist";
+  ctx.font = `900 42px ${FONT_FAMILY}`;
   const statsRightX = statsX + statsWidth;
   ctx.fillText(verdict.blame_split, statsRightX, statsY);
-  ctx.fillText(`${verdict.toxicity_score}/100`, statsRightX, statsY + 65);
-  ctx.fillText(`${verdict.red_flag_count}`, statsRightX, statsY + 130);
+  ctx.fillText(`${verdict.toxicity_score}/100`, statsRightX, statsY + 75);
+  ctx.fillText(`${verdict.red_flag_count}`, statsRightX, statsY + 150);
 
-  // 7. THE SENTENCE (THE FIX!): Multi-Line Wrapping
-  const sentenceY = statsY + 230;
+  // 7. THE SENTENCE (Multi-Line Wrapping)
+  const sentenceY = statsY + 250;
   const sentenceWidth = size - 200;
-  const sentenceX = size / 2; // Center-aligned wrapping
+  const sentenceX = size / 2; 
   const sentenceLineHeight = 55;
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#e2b714"; // Gavel Gold
-  ctx.font = "black 42px Geist";
+  ctx.fillStyle = "#e2b714"; 
+  ctx.font = `900 42px ${FONT_FAMILY}`;
   ctx.fillText("THE SENTENCE:", sentenceX, sentenceY);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "italic 38px Geist";
+  ctx.font = `italic 38px ${FONT_FAMILY}`;
   
-  // Use our new wrapText function instead of fillText
-  // The first argument is the ctx, the second is the text to wrap, 
-  // the third and fourth are the initial x and y,
-  // the fifth is the max width, and the sixth is the line height.
-  // It returns the final y position, so we know where to draw the watermark.
-  const finalSentenceY = wrapText(
-    ctx, 
-    verdict.sentence, 
-    sentenceX, 
-    sentenceY + 70, 
-    sentenceWidth, 
-    sentenceLineHeight
-  );
+  wrapText(ctx, verdict.sentence, sentenceX, sentenceY + 70, sentenceWidth, sentenceLineHeight);
 
   // 8. THE WATERMARK
   ctx.textAlign = "center";
-  ctx.fillStyle = "#52525b"; // text-zinc-600
-  ctx.font = "bold 28px Geist";
-  // Dynamically place the watermark based on where the sentence ended.
-  ctx.fillText("internetcourt.app", size / 2, size - 80);
+  ctx.fillStyle = "#52525b"; 
+  ctx.font = `bold 28px ${FONT_FAMILY}`;
+  ctx.fillText("internetcourt.app", size / 2, size - 50);
 
   // 9. TRIGGER THE DOWNLOAD
   const link = document.createElement("a");
